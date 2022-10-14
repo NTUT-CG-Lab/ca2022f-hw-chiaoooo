@@ -80,6 +80,7 @@
       <button id="right">右</button>
       <button id="plus">放大+</button>
       <button id="minus">縮小-</button>
+      <button id="window_update">window_update</button>
       <div class="background-control">
         <h2>更換背景</h2>
         <div id="backgroundDrag">拖放背景圖片</div>
@@ -130,6 +131,18 @@
       document.querySelector("#minus").addEventListener("click", (e) => {
         scale-=0.1;
         el.style.transform = `scale(${scale})`;
+      });
+      document.querySelector("#window_update").addEventListener("click", (e) => {
+        let x_move =0.85;
+
+        setInterval(()=>{ 
+          if(x_move>0.25){
+            x_move = x_move - 0.01; 
+          }      
+          
+          update(x_move, 0, 1);
+        },100);
+        
       });
 
       let backgroundDragEL = document.querySelector("#backgroundDrag");
