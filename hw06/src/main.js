@@ -1,50 +1,68 @@
-document.querySelector('.Sliders').addEventListener('change', e => {
-  let val = parseFloat(e.target.value);
-  let id = e.target.id;
-  runModel(view => {
-    //先傳到lapp delegate的view的參數
-    //綁定參數
-    if (id === 'ParamAngleX') view.angleX = val;
-    if (id === 'ParamAngleY') view.angleY = val;
-    if (id === 'ParamAngleZ') view.angleZ = val;
-    if (id === 'ParamEyeLOpen') view.eyeLOpen = val;
-    if (id === 'ParamEyeLSmile') view.eyeLSmile = val;
-    if (id === 'ParamEyeROpen') view.eyeROpen = val;
-    if (id === 'ParamEyeRSmile') view.eyeRSmile = val;
-    if (id === 'ParamEyeBallX') view.eyeBallX = val;
-    if (id === 'ParamEyeBallY') view.eyeBallY = val;
-    view.eyeBallForm = 0;
-    if (id === 'ParamBrowLY') view.browLY = val;
-    if (id === 'ParamBrowRY') view.browRY = val;
-    if (id === 'ParamBrowLX') view.browLX = val;
-    if (id === 'ParamBrowRX') view.browRX = val;
-    if (id === 'ParamBrowLAngle') view.browLAngle = val;
-    if (id === 'ParamBrowRAngle') view.browRAngle = val;
-    if (id === 'ParamBrowLForm') view.browLForm = val;
-    if (id === 'ParamBrowRForm') view.browRForm = val;
-    //mouth form
-    if (id === 'ParamMouthForm') view.mouthForm = val;
-    //mouth openY
-    if (id === 'ParamMouthOpenY') view.mouthOpenY = val;
-    if (id === 'ParamCheek') view.cheek = val;
-    if (id === 'ParamBodyAngleX') view.bodyAngleX = val;
-    if (id === 'ParamBodyAngleY') view.bodyAngleY = val;
-    if (id === 'ParamBodyAngleZ') view.bodyAngleZ = val;
-    if (id === 'ParamBreath') view.breath = val;
-    view.armLA = 0;
-    view.armRA = 0;
-    view.armLB = 0;
-    view.armRB = 0;
-    view.handL = 0;
-    view.handR = 0;
-    if (id === 'ParamHairFront') view.hairFront = val;
-    view.hairSide = 0;
-    if (id === 'ParamHairBack') view.hairBack = val;
-    view.hairFluffy = 0;
-    view.shoulderY = 0;
-    view.bustX = 0;
-    view.bustY = 0;
-    view.baseX = 0;
-    view.baseY = 0;
+/**
+ * camera and video helper
+ * 看起來主要是透過js來抓取camera的列表
+ * 還有藉由camera取得live video
+ */
+
+// camera control
+const cameraSelect = document.getElementById('camera-source');
+const videoPlayer = document.getElementById('video-player');
+
+const MediaStreamHelper = {
+  // Property of the object to store the current stream
+  _stream: null,
+  // This method will return the promise to list the real devices
+  getDevices: function () {
+    return navigator.mediaDevices.enumerateDevices();
+  },
+  // Request user permissions to access the camera and video
+  requestStream: function () {
+    if (this._stream) {
+      this._stream.getTracks().forEach(track => {
+        track.stop();
+      });
+    }
+
+    const videoSource = cameraSelect.value;
+    const constraints = {
+      video: {
+        deviceId: videoSource ? { exact: videoSource } : undefined,
+        height: 480,
+      },
+    };
+
+    return navigator.mediaDevices.getUserMedia(constraints);
+  },
+};
+
+MediaStreamHelper.requestStream()
+  .then(function (stream) {
+    MediaStreamHelper._stream = stream;
+
+    videoPlayer.srcObject = stream;
+
+    MediaStreamHelper.getDevices().then(devices => {
+      devices.forEach(device => {
+        let option = new Option();
+        option.value = device.deviceId;
+        if (device.kind == 'videoinput') {
+          option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+          cameraSelect.appendChild(option);
+        }
+        console.log(device);
+        cameraSelect.selectedIndex = [...cameraSelect.options].findIndex(
+          option => option.text === stream.getVideoTracks()[0].label
+        );
+      });
+    });
+  })
+  .catch(err => {
+    console.error(err);
   });
-});
+
+cameraSelect.onchange = () => {
+  MediaStreamHelper.requestStream().then(function (stream) {
+    MediaStreamHelper._stream = stream;
+    videoPlayer.srcObject = stream;
+  });
+};
